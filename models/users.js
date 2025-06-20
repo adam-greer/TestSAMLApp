@@ -67,6 +67,23 @@ function setAdmin(username, isAdmin) {
   return true;
 }
 
+/**
+ * Update a user's profile fields.
+ */
+function updateProfile(username, newData) {
+  const user = findByUsername(username);
+  if (!user) return false;
+
+  // Update only allowed fields
+  if (newData.firstName !== undefined) user.firstName = newData.firstName;
+  if (newData.lastName !== undefined) user.lastName = newData.lastName;
+  if (newData.email !== undefined) user.email = newData.email;
+  if (newData.displayname !== undefined) user.displayname = newData.displayname;
+  if (newData.manager !== undefined) user.manager = newData.manager;
+
+  return true;
+}
+
 // Export everything you need
 module.exports = {
   findByUsername,
@@ -75,5 +92,6 @@ module.exports = {
   getUserStats,
   setAdmin,
   findById,
+  updateProfile,
 };
 

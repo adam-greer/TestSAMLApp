@@ -10,10 +10,6 @@ const flash = require('connect-flash');
 const expressLayouts = require('express-ejs-layouts');
 const crypto = require('crypto');
 const forge = require('node-forge');
-const mod = require('passport-saml-metadata');
-const generateServiceProviderMetadata = mod.default || mod;
-console.log('generateServiceProviderMetadata is a function:', typeof generateServiceProviderMetadata === 'function');
-
 
 require('dotenv').config(); // Load env vars from .env if present
 
@@ -55,16 +51,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
 
-app.use((req, res, next) => {
-  res.locals.user     = req.user || null;
-  res.locals.isAdmin  = req.user?.isAdmin || false;
-  res.locals.messages = req.flash();
-  next();
-});
-
-
 // === Globals for SAML ===
-let isamlConfig = null;
+let samlConfig = null;
 let samlEnabled = false;
 let samlStrategy = null;
 
@@ -77,33 +65,6 @@ passport.use(new LocalStrategy((username, password, done) => {
   }
   return done(null, user);
 }));
-
-
-// === Load SAML Config & Setup Strategy ===
-function loadSamlConfig() {
-  try {
-    // Ensure admin directory exists
-    const adminDir = path.dirname(CONFIG_PATH);
-    if (!fs.existsSync(adminDir)) {
-      fs.mkdirSync(adminDir, { recursive: true });
-    }
-
-    const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
-    const cfg = JSON.parse(raw);
-    if (cfg.cert && cfg.entryPoint && cfg.issuer && cfg.callbackUrl) {
-      samlEnabled = true;
-      samlConfig = cfg;
-      console.log('SAML config loaded, SAML login enabled');
-      setupSamlStrategy();
-    } else {
-      samlEnabled = false;
-      console.warn('SAML config missing required fields or cert, SAML login disabled');
-    }
-  } catch (err) {
-    samlEnabled = false;
-    console.warn('Could not load SAML config, SAML login disabled:', err.message);
-  }
-}
 
 function setupSamlStrategy() {
   if (!samlConfig) return;
@@ -134,11 +95,115 @@ function setupSamlStrategy() {
   passport.use('saml', samlStrategy);
 }
 
+// === Load and rebuild SAML config with proper PEM cert ===
+function loadSamlConfig() {
+  try {
+    const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
+    const cfg = JSON.parse(raw);
+
+    if (cfg.cert || cfg.certificate) {
+      // The cert may be stored as a continuous base64 string (no headers/newlines)
+      let rawCert = cfg.cert || cfg.certificate;
+
+      // If the cert string does not already contain PEM headers, rebuild it
+      if (!rawCert.includes('-----BEGIN CERTIFICATE-----')) {
+        rawCert =
+          '-----BEGIN CERTIFICATE-----\n' +
+          rawCert.match(/.{1,64}/g).join('\n') + // add newlines every 64 chars
+          '\n-----END CERTIFICATE-----\n';
+      }
+
+      cfg.cert = rawCert; // overwrite with proper PEM
+    } else {
+      console.warn('SAML config missing certificate');
+    }
+
+    samlConfig = cfg;
+    samlEnabled = !!(cfg.cert && cfg.entryPoint && cfg.issuer && cfg.callbackUrl);
+
+    if (samlEnabled) {
+      console.log('SAML config loaded, enabling SAML login');
+      setupSamlStrategy();
+    } else {
+      console.warn('SAML config missing required fields or cert, disabling SAML login');
+      samlEnabled = false;
+    }
+
+  } catch (err) {
+    samlEnabled = false;
+    console.warn('Failed to load SAML config:', err.message);
+  }
+}
+
+// Initial load
 loadSamlConfig();
 
+// === SAML Metadata Route ===
+app.get('/saml/metadata', (req, res) => {
+  if (!samlConfig || !samlConfig.cert || !samlStrategy) {
+    return res.status(500).send('SAML not configured');
+  }
 
-const samlRouter = require('./routes/saml')(samlConfig);
-app.use('/saml', samlRouter);
+  try {
+    // Use the strategy's generateServiceProviderMetadata method
+    const metadata = samlStrategy.generateServiceProviderMetadata(
+      samlConfig.cert, // decryption cert
+      samlConfig.cert  // signing cert (can be the same)
+    );
+    res.type('application/xml').send(metadata);
+  } catch (err) {
+    console.error('Failed to generate SP metadata:', err);
+    res.status(500).send('Failed to generate SP metadata');
+  }
+});
+
+// === Admin: Generate Certificate and Key ===
+app.post('/admin/saml/generate-cert', ensureLoggedIn, ensureAdmin, (req, res) => {
+  try {
+    const pki = forge.pki;
+    const keys = pki.rsa.generateKeyPair(2048);
+    const cert = pki.createCertificate();
+
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = '01';
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 2);
+
+    const attrs = [{ name: 'commonName', value: 'TestSAMLApp' }];
+    cert.setSubject(attrs);
+    cert.setIssuer(attrs);
+    cert.sign(keys.privateKey);
+
+    const certPem = pki.certificateToPem(cert);
+    const keyPem = pki.privateKeyToPem(keys.privateKey);
+
+    // Write cert and key files
+    fs.writeFileSync(CERT_PATH, certPem);
+    fs.writeFileSync(KEY_PATH, keyPem);
+
+    // Load config, update cert with full PEM (with headers)
+    let config = {};
+    try {
+      config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    } catch {}
+
+    // Store full PEM cert string here (including headers)
+    config.cert = certPem;
+
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
+
+    // Reload SAML config and strategy after cert update
+    loadSamlConfig();
+
+    req.flash('success', 'Certificate generated and saved successfully.');
+    res.redirect('/admin/saml-config');
+  } catch (err) {
+    console.error('Error generating cert:', err);
+    req.flash('error', 'Failed to generate certificate: ' + err.message);
+    res.redirect('/admin/saml-config');
+  }
+});
 
 // === Passport Serialization ===
 passport.serializeUser((user, done) => {
@@ -166,70 +231,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// === SAML Metadata Route (Before other routes) ===
-
-app.get('/saml/metadata', (req, res) => {
-  if (!samlConfig || !samlConfig.cert) {
-    return res.status(500).send('SAML not configured');
-  }
-
-  try {
-    const metadata = generateServiceProviderMetadata(
-      samlConfig.callbackUrl,
-      samlConfig.cert
-    );
-    res.type('application/xml').send(metadata);
-  } catch (err) {
-    console.error('Failed to generate SP metadata:', err);
-    res.status(500).send('Failed to generate SP metadata');
-  }
-});
-
-
-
-
-// === Passport Serialization ===
-passport.serializeUser((user, done) => {
-  done(null, { id: user.id, username: user.username });
-});
-
-
-// === Global Template Variables & Gravatar ===
-app.use((req, res, next) => {
-  res.locals.user = req.user || null;
-  res.locals.isAdmin = req.user?.isAdmin || false;
-  res.locals.messages = req.flash();
-
-  if (req.user && req.user.email) {
-    const md5 = crypto.createHash('md5').update(req.user.email.trim().toLowerCase()).digest('hex');
-    res.locals.user.avatar = `https://www.gravatar.com/avatar/${md5}?d=identicon`;
-  } else if (res.locals.user) {
-    res.locals.user.avatar = 'https://www.gravatar.com/avatar?d=identicon';
-  }
-  next();
-});
-
-// === SAML Metadata Route (Before other routes) ===
-
-app.get('/saml/metadata', (req, res) => {
-  if (!samlConfig || !samlConfig.cert) {
-    return res.status(500).send('SAML not configured');
-  }
-
-  try {
-    const metadata = generateServiceProviderMetadata(
-      samlConfig.callbackUrl,
-      samlConfig.cert
-    );
-    res.type('application/xml').send(metadata);
-  } catch (err) {
-    console.error('Failed to generate SP metadata:', err);
-    res.status(500).send('Failed to generate SP metadata');
-  }
-});
-
-
-
 // === Admin: SAML Config Editor ===
 app.get('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
   let configText = '{}';
@@ -251,7 +252,7 @@ app.get('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
 
 app.post('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
   const configPath = path.join(__dirname, 'admin', 'saml-config.json');
-  
+
   // Load current config or default empty
   let config = {};
   try {
@@ -276,53 +277,12 @@ app.post('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
   res.redirect('/admin/saml-config');
 });
 
-
-// === Admin: Generate Cert + Key ===
-app.post('/admin/saml/generate-cert', ensureLoggedIn, ensureAdmin, (req, res) => {
-  try {
-    const pki = forge.pki;
-    const keys = pki.rsa.generateKeyPair(2048);
-    const cert = pki.createCertificate();
-
-    cert.publicKey = keys.publicKey;
-    cert.serialNumber = '01';
-    cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date();
-    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 2);
-
-    const attrs = [{ name: 'commonName', value: 'TestSAMLApp' }];
-    cert.setSubject(attrs);
-    cert.setIssuer(attrs);
-    cert.sign(keys.privateKey);
-
-    const certPem = pki.certificateToPem(cert);
-    const keyPem = pki.privateKeyToPem(keys.privateKey);
-
-    fs.writeFileSync(CERT_PATH, certPem);
-    fs.writeFileSync(KEY_PATH, keyPem);
-
-    const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-    config.cert = certPem;
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-
-    loadSamlConfig(); // reload config after updating cert
-    req.flash('success', 'Certificate generated and saved successfully.');
-    res.redirect('/admin/saml-config');
-  } catch (err) {
-    console.error('Error generating cert:', err);
-    req.flash('error', 'Failed to generate certificate: ' + err.message);
-    res.redirect('/admin/saml-config');
-  }
-});
-
 console.log('=== DEBUGGING ROUTER IMPORTS ===');
 
 // Test each import individually
 try {
   const authRouter = require('./routes/auth');
   console.log('✓ authRouter imported successfully, type:', typeof authRouter);
-  console.log('  - isFunction:', typeof authRouter === 'function');
-  console.log('  - constructor:', authRouter.constructor?.name);
 } catch (err) {
   console.log('✗ authRouter import failed:', err.message);
 }
@@ -330,8 +290,6 @@ try {
 try {
   const adminRouter = require('./routes/admin');
   console.log('✓ adminRouter imported successfully, type:', typeof adminRouter);
-  console.log('  - isFunction:', typeof adminRouter === 'function');
-  console.log('  - constructor:', adminRouter.constructor?.name);
 } catch (err) {
   console.log('✗ adminRouter import failed:', err.message);
 }
@@ -339,8 +297,6 @@ try {
 try {
   const profileRouter = require('./routes/profile');
   console.log('✓ profileRouter imported successfully, type:', typeof profileRouter);
-  console.log('  - isFunction:', typeof profileRouter === 'function');
-  console.log('  - constructor:', profileRouter.constructor?.name);
 } catch (err) {
   console.log('✗ profileRouter import failed:', err.message);
 }
@@ -348,8 +304,6 @@ try {
 try {
   const usersRouter = require('./routes/userRoutes');
   console.log('✓ usersRouter imported successfully, type:', typeof usersRouter);
-  console.log('  - isFunction:', typeof usersRouter === 'function');
-  console.log('  - constructor:', usersRouter.constructor?.name);
 } catch (err) {
   console.log('✗ usersRouter import failed:', err.message);
 }
@@ -357,8 +311,6 @@ try {
 try {
   const uploadRouter = require('./routes/upload');
   console.log('✓ uploadRouter imported successfully, type:', typeof uploadRouter);
-  console.log('  - isFunction:', typeof uploadRouter === 'function');
-  console.log('  - constructor:', uploadRouter.constructor?.name);
 } catch (err) {
   console.log('✗ uploadRouter import failed:', err.message);
 }
@@ -369,24 +321,25 @@ console.log('=== END DEBUG ===');
 const authRouter = require('./routes/auth');
 const adminRouter = require('./routes/admin');
 const profileRouter = require('./routes/profile');
-const usersRouter = require('./routes/userRoutes'); // This should now work properly
+const usersRouter = require('./routes/userRoutes');
 const uploadRouter = require('./routes/upload');
 console.log('[DEBUG] Requiring commentsRouter...');
 const commentsRouter = require('./routes/comments');
 const logoutRouter = require('./routes/logout');
 const samlConfigRouter = require('./routes/admin-saml-config');
-
+const samlRouter = require('./routes/saml')(samlConfig);
 
 // Mount routers
 app.use('/', authRouter);
 app.use('/admin', adminRouter);
 app.use('/profile', profileRouter);
-app.use('/users', usersRouter); // This line should now work without errors
+app.use('/users', usersRouter);
 app.use('/upload', uploadRouter);
 app.use('/', commentsRouter);
 app.use('/logout', logoutRouter);
 app.use('/admin/saml-config', samlConfigRouter);
 app.use('/', samlConfigRouter);
+app.use('/saml', samlRouter);
 
 // === Error Handling Middleware (Must be last) ===
 // 404 handler

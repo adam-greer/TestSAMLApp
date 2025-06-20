@@ -10,7 +10,10 @@ const flash = require('connect-flash');
 const expressLayouts = require('express-ejs-layouts');
 const crypto = require('crypto');
 const forge = require('node-forge');
-const { generateServiceProviderMetadata } = require('passport-saml-metadata');
+const mod = require('passport-saml-metadata');
+const generateServiceProviderMetadata = mod.default || mod;
+console.log('generateServiceProviderMetadata is a function:', typeof generateServiceProviderMetadata === 'function');
+
 
 require('dotenv').config(); // Load env vars from .env if present
 
@@ -56,6 +59,7 @@ app.use((req, res, next) => {
   next();
 });
 
+
 // === Globals for SAML ===
 let samlConfig = null;
 let samlEnabled = false;
@@ -70,6 +74,7 @@ passport.use(new LocalStrategy((username, password, done) => {
   }
   return done(null, user);
 }));
+
 
 // === Load SAML Config & Setup Strategy ===
 function loadSamlConfig() {
@@ -128,6 +133,10 @@ function setupSamlStrategy() {
 
 loadSamlConfig();
 
+
+const samlRouter = require('./routes/saml')(samlConfig);
+app.use('/saml', samlRouter);
+
 // === Passport Serialization ===
 passport.serializeUser((user, done) => {
   done(null, { id: user.id, username: user.username });
@@ -147,7 +156,7 @@ app.use((req, res, next) => {
 
   if (req.user && req.user.email) {
     const md5 = crypto.createHash('md5').update(req.user.email.trim().toLowerCase()).digest('hex');
-    res.locals.user.avatar = 'https://www.gravatar.com/avatar/${md5}?d=identicon';
+    res.locals.user.avatar = `https://www.gravatar.com/avatar/${md5}?d=identicon`;
   } else if (res.locals.user) {
     res.locals.user.avatar = 'https://www.gravatar.com/avatar?d=identicon';
   }
@@ -155,41 +164,165 @@ app.use((req, res, next) => {
 });
 
 // === SAML Metadata Route (Before other routes) ===
+
 app.get('/saml/metadata', (req, res) => {
-  if (!samlConfig || !samlConfig.cert) return res.status(500).send('SAML not configured');
+  if (!samlConfig || !samlConfig.cert) {
+    return res.status(500).send('SAML not configured');
+  }
 
-  const metadata = generateServiceProviderMetadata(
-    samlConfig.callbackUrl,
-    samlConfig.cert
-  );
-
-  res.type('application/xml').send(metadata);
+  try {
+    const metadata = generateServiceProviderMetadata(
+      samlConfig.callbackUrl,
+      samlConfig.cert
+    );
+    res.type('application/xml').send(metadata);
+  } catch (err) {
+    console.error('Failed to generate SP metadata:', err);
+    res.status(500).send('Failed to generate SP metadata');
+  }
 });
+
+
 
 // === Admin: SAML Config Editor ===
 app.get('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
   let configText = '{}';
+  let configObj = {};
   try {
     configText = fs.readFileSync(CONFIG_PATH, 'utf-8');
-    JSON.parse(configText); // validate it's valid JSON
+    configObj = JSON.parse(configText);
   } catch {
-    configText = '{}'; // fallback to empty object if file missing or invalid
+    configText = '{}';
+    configObj = {};
   }
-  res.render('admin-saml-config', { title: 'Edit SAML Config', configText });
+  res.render('admin-saml-config', {
+    title: 'Edit SAML Config',
+    configText,
+    config: configObj,
+    messages: req.flash()
+  });
 });
 
 app.post('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
-  const configText = req.body.configText || '{}';
+  const configPath = path.join(__dirname, 'admin', 'saml-config.json');
+
+  // Load current config or default empty
+  let config = {};
   try {
-    JSON.parse(configText); // validate JSON
-    fs.writeFileSync(CONFIG_PATH, configText, 'utf-8');
-    loadSamlConfig(); // reload after save
-    req.flash('success', 'SAML config saved successfully.');
-  } catch (err) {
-    req.flash('error', 'Invalid JSON format: ' + err.message);
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch {}
+
+  // Update the attributes key from the form
+  if (req.body.attributes) {
+    config.attributes = req.body.attributes;
   }
+
+  // Optionally update other config fields here as needed
+
+  // Write back the updated config
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+    req.flash('success', 'SAML configuration updated successfully.');
+  } catch (err) {
+    req.flash('error', 'Failed to save config: ' + err.message);
+  }
+
   res.redirect('/admin/saml-config');
 });
+
+// === Passport Serialization ===
+passport.serializeUser((user, done) => {
+  done(null, { id: user.id, username: user.username });
+});
+
+passport.deserializeUser((obj, done) => {
+  // Use the user model to find users
+  const user = users.findById(obj.id) || users.findByUsername(obj.username) || obj;
+  done(null, user);
+});
+
+// === Global Template Variables & Gravatar ===
+app.use((req, res, next) => {
+  res.locals.user = req.user || null;
+  res.locals.isAdmin = req.user?.isAdmin || false;
+  res.locals.messages = req.flash();
+
+  if (req.user && req.user.email) {
+    const md5 = crypto.createHash('md5').update(req.user.email.trim().toLowerCase()).digest('hex');
+    res.locals.user.avatar = `https://www.gravatar.com/avatar/${md5}?d=identicon`;
+  } else if (res.locals.user) {
+    res.locals.user.avatar = 'https://www.gravatar.com/avatar?d=identicon';
+  }
+  next();
+});
+
+// === SAML Metadata Route (Before other routes) ===
+
+app.get('/saml/metadata', (req, res) => {
+  if (!samlConfig || !samlConfig.cert) {
+    return res.status(500).send('SAML not configured');
+  }
+
+  try {
+    const metadata = generateServiceProviderMetadata(
+      samlConfig.callbackUrl,
+      samlConfig.cert
+    );
+    res.type('application/xml').send(metadata);
+  } catch (err) {
+    console.error('Failed to generate SP metadata:', err);
+    res.status(500).send('Failed to generate SP metadata');
+  }
+});
+
+
+
+// === Admin: SAML Config Editor ===
+app.get('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
+  let configText = '{}';
+  let configObj = {};
+  try {
+    configText = fs.readFileSync(CONFIG_PATH, 'utf-8');
+    configObj = JSON.parse(configText);
+  } catch {
+    configText = '{}';
+    configObj = {};
+  }
+  res.render('admin-saml-config', {
+    title: 'Edit SAML Config',
+    configText,
+    config: configObj,
+    messages: req.flash()
+  });
+});
+
+app.post('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
+  const configPath = path.join(__dirname, 'admin', 'saml-config.json');
+  
+  // Load current config or default empty
+  let config = {};
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch {}
+
+  // Update the attributes key from the form
+  if (req.body.attributes) {
+    config.attributes = req.body.attributes;
+  }
+
+  // Optionally update other config fields here as needed
+
+  // Write back the updated config
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+    req.flash('success', 'SAML configuration updated successfully.');
+  } catch (err) {
+    req.flash('error', 'Failed to save config: ' + err.message);
+  }
+
+  res.redirect('/admin/saml-config');
+});
+
 
 // === Admin: Generate Cert + Key ===
 app.post('/admin/saml/generate-cert', ensureLoggedIn, ensureAdmin, (req, res) => {
@@ -285,6 +418,7 @@ const adminRouter = require('./routes/admin');
 const profileRouter = require('./routes/profile');
 const usersRouter = require('./routes/userRoutes'); // This should now work properly
 const uploadRouter = require('./routes/upload');
+const commentsRouter = require('./routes/comments');
 
 // Mount routers
 app.use('/', authRouter);
@@ -292,6 +426,7 @@ app.use('/admin', adminRouter);
 app.use('/profile', profileRouter);
 app.use('/users', usersRouter); // This line should now work without errors
 app.use('/upload', uploadRouter);
+app.use('/', commentsRouter);
 
 // === Error Handling Middleware (Must be last) ===
 // 404 handler

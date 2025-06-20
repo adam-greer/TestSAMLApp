@@ -64,7 +64,7 @@ app.use((req, res, next) => {
 
 
 // === Globals for SAML ===
-let samlConfig = null;
+let isamlConfig = null;
 let samlEnabled = false;
 let samlStrategy = null;
 
@@ -187,51 +187,6 @@ app.get('/saml/metadata', (req, res) => {
 
 
 
-// === Admin: SAML Config Editor ===
-app.get('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
-  let configText = '{}';
-  let configObj = {};
-  try {
-    configText = fs.readFileSync(CONFIG_PATH, 'utf-8');
-    configObj = JSON.parse(configText);
-  } catch {
-    configText = '{}';
-    configObj = {};
-  }
-  res.render('admin-saml-config', {
-    title: 'Edit SAML Config',
-    configText,
-    config: configObj,
-    messages: req.flash()
-  });
-});
-
-app.post('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
-  const configPath = path.join(__dirname, 'admin', 'saml-config.json');
-
-  // Load current config or default empty
-  let config = {};
-  try {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch {}
-
-  // Update the attributes key from the form
-  if (req.body.attributes) {
-    config.attributes = req.body.attributes;
-  }
-
-  // Optionally update other config fields here as needed
-
-  // Write back the updated config
-  try {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
-    req.flash('success', 'SAML configuration updated successfully.');
-  } catch (err) {
-    req.flash('error', 'Failed to save config: ' + err.message);
-  }
-
-  res.redirect('/admin/saml-config');
-});
 
 // === Passport Serialization ===
 passport.serializeUser((user, done) => {
@@ -419,6 +374,8 @@ const uploadRouter = require('./routes/upload');
 console.log('[DEBUG] Requiring commentsRouter...');
 const commentsRouter = require('./routes/comments');
 const logoutRouter = require('./routes/logout');
+const samlConfigRouter = require('./routes/admin-saml-config');
+
 
 // Mount routers
 app.use('/', authRouter);
@@ -428,6 +385,8 @@ app.use('/users', usersRouter); // This line should now work without errors
 app.use('/upload', uploadRouter);
 app.use('/', commentsRouter);
 app.use('/logout', logoutRouter);
+app.use('/admin/saml-config', samlConfigRouter);
+app.use('/', samlConfigRouter);
 
 // === Error Handling Middleware (Must be last) ===
 // 404 handler

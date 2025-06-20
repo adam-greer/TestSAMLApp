@@ -5,7 +5,7 @@ const localUsers = [
   {
     id: 1,
     username: 'admin',
-    passwordHash: '', // or whatever your validatePassword uses
+    passwordHash: 'password', // or whatever your validatePassword uses
     firstName: 'Admin',
     lastName: 'User',
     email: 'admin@example.com',
@@ -42,7 +42,8 @@ function findById(id) {
  */
 function validatePassword(username, password) {
   const user = findByUsername(username);
-  return user && password === 'password'; // dummy check
+  if (!user) return false;
+  return user.passwordHash === password;  // compare entered password with stored
 }
 
 /**

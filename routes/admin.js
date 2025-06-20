@@ -86,6 +86,68 @@ router.get('/users', ensureAdmin, (req, res) => {
   });
 });
 
+// Show create user form
+router.get('/users/create', ensureAdmin, (req, res) => {
+  res.render('admin-users-create', {
+    title: 'Create New User',
+    user: req.user,
+    isAdmin: req.user.isAdmin,
+    messages: req.flash()
+  });
+});
+
+// Handle create user form submission
+router.post('/users/create', ensureAdmin, (req, res) => {
+  try {
+    const {
+      username,
+      password,
+      displayName,
+      firstName,
+      lastName,
+      email,
+      title,
+      manager,
+    } = req.body;
+
+    const isAdmin = req.body.isAdmin === 'on';
+    const canLoginLocally = req.body.canLoginLocally === 'on';
+
+    if (!username || !password) {
+      req.flash('error', 'Username and password are required');
+      return res.redirect('/admin/users/create');
+    }
+
+    const newUser = {
+      username,
+      passwordHash: password, // ⚠️ Note: still needs hashing in production
+      displayName,
+      firstName,
+      lastName,
+      email,
+      title,
+      manager,
+      isAdmin,
+      canLoginLocally,
+      authType: 'local',
+    };
+
+    const createdUser = userModel.createUser(newUser);
+
+    if (createdUser) {
+      req.flash('success', `User "${username}" created successfully`);
+      return res.redirect(`/admin/users/edit/${createdUser.id}`);
+    } else {
+      req.flash('error', 'User with that username already exists');
+      return res.redirect('/admin/users/create');
+    }
+  } catch (err) {
+    console.error('Error creating user:', err);
+    req.flash('error', 'Internal server error');
+    return res.redirect('/admin/users/create');
+  }
+});
+
 
 // Admin edit user form
 
@@ -112,24 +174,28 @@ router.get('/users/edit/:id', ensureAdmin, (req, res) => {
 
 // update edited users fields
 
-router.post('/users/edit/:username', ensureAdmin, (req, res) => {
-  const targetUser = userModel.findByUsername(req.params.username);
+router.post('/users/edit/:id', ensureAdmin, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const user = userModel.findById(id);
 
-  if (!targetUser) {
+  if (!user) {
     req.flash('error', 'User not found');
     return res.redirect('/admin/users');
   }
 
-  // Update allowed fields
-  targetUser.firstName = req.body.firstName || targetUser.firstName;
-  targetUser.lastName = req.body.lastName || targetUser.lastName;
-  targetUser.displayName = req.body.displayName || targetUser.displayName;
-  targetUser.email = req.body.email || targetUser.email;
+  // Update fields
+  user.username = req.body.username;
+  user.firstName = req.body.firstName;
+  user.lastName = req.body.lastName;
+  user.displayName = req.body.displayName;
+  user.email = req.body.email;
+  user.title = req.body.title;
+  user.manager = req.body.manager;
 
+  // Since this is an in-memory store, just update the object directly.
   req.flash('success', 'User updated successfully');
   res.redirect('/admin/users');
 });
-
 
 // Toggle admin status for a user
 router.post('/users/:username/toggle-admin', ensureAdmin, (req, res) => {

@@ -1,53 +1,53 @@
 <div class="container mt-4">
-  <h1>✏️ Edit User</h1>
-  <form method="POST" action="/admin/users/edit/<%= user.id %>">
+  <h1>✏ Edit User</h1>
+  <form method="POST" action="/admin/users/edit/<%= editUser.id %>">
     <div class="mb-3">
       <label for="username" class="form-label">Username</label>
-      <input type="text" class="form-control" id="username" name="username" value="<%= user.username %>" required>
+      <input type="text" class="form-control" id="username" name="username" value="<%= editUser.username %>" required>
     </div>
 
     <div class="mb-3">
       <label for="firstName" class="form-label">First Name</label>
-      <input type="text" class="form-control" id="firstName" name="firstName" value="<%= user.firstName %>">
+      <input type="text" class="form-control" id="firstName" name="firstName" value="<%= editUser.firstName %>">
     </div>
 
     <div class="mb-3">
       <label for="lastName" class="form-label">Last Name</label>
-      <input type="text" class="form-control" id="lastName" name="lastName" value="<%= user.lastName %>">
+      <input type="text" class="form-control" id="lastName" name="lastName" value="<%= editUser.lastName %>">
     </div>
 
     <div class="mb-3">
       <label for="displayName" class="form-label">Display Name</label>
-      <input type="text" class="form-control" id="displayName" name="displayName" value="<%= user.displayName %>">
+      <input type="text" class="form-control" id="displayName" name="displayName" value="<%= editUser.displayName %>">
     </div>
 
     <div class="mb-3">
       <label for="email" class="form-label">Email</label>
-      <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>">
+      <input type="email" class="form-control" id="email" name="email" value="<%= editUser.email %>">
     </div>
 
     <div class="mb-3">
       <label for="title" class="form-label">Title</label>
-      <input type="text" class="form-control" id="title" name="title" value="<%= user.title %>">
+      <input type="text" class="form-control" id="title" name="title" value="<%= editUser.title %>">
     </div>
 
     <div class="mb-3">
       <label for="manager" class="form-label">Manager</label>
-      <input type="text" class="form-control" id="manager" name="manager" value="<%= user.manager %>">
+      <input type="text" class="form-control" id="manager" name="manager" value="<%= editUser.manager %>">
     </div>
 
     <div class="form-check mb-3">
-      <input class="form-check-input" type="checkbox" id="isAdmin" name="isAdmin" <%= user.isAdmin ? 'checked' : '' %>>
+      <input class="form-check-input" type="checkbox" id="isAdmin" name="isAdmin" <%= editUser.isAdmin ? 'checked' : '' %>>
       <label class="form-check-label" for="isAdmin">Admin Privileges</label>
     </div>
 
     <div class="form-check mb-4">
-      <input class="form-check-input" type="checkbox" id="canLoginLocally" name="canLoginLocally" <%= user.canLoginLocally ? 'checked' : '' %>>
+      <input class="form-check-input" type="checkbox" id="canLoginLocally" name="canLoginLocally" <%= editUser.canLoginLocally ? 'checked' : '' %>>
       <label class="form-check-label" for="canLoginLocally">Allow this user to login</label>
     </div>
 
     <button type="submit" class="btn btn-primary">💾 Save Changes</button>
-    <a href="/admin/users" class="btn btn-secondary ms-2">↩️ Cancel</a>
+    <a href="/admin/users" class="btn btn-secondary ms-2">↩️Cancel</a>
   </form>
 </div>
 

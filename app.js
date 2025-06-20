@@ -418,6 +418,7 @@ const usersRouter = require('./routes/userRoutes'); // This should now work prop
 const uploadRouter = require('./routes/upload');
 console.log('[DEBUG] Requiring commentsRouter...');
 const commentsRouter = require('./routes/comments');
+const logoutRouter = require('./routes/logout');
 
 // Mount routers
 app.use('/', authRouter);
@@ -426,6 +427,7 @@ app.use('/profile', profileRouter);
 app.use('/users', usersRouter); // This line should now work without errors
 app.use('/upload', uploadRouter);
 app.use('/', commentsRouter);
+app.use('/logout', logoutRouter);
 
 // === Error Handling Middleware (Must be last) ===
 // 404 handler

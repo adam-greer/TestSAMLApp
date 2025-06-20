@@ -22,9 +22,17 @@ const localUsers = [
 function findByUsername(username) {
   return localUsers.find(u => u.username === username);
 }
+/* OLD LOGIC
+function findById(id) {
+  return localUsers.find(user => user.id === Number(id));
+   console.log(`findById called with id=${id}, found user:`, user);
+}
+*/
 
 function findById(id) {
-  return localUsers.find(user => user.id === id);
+  const user = localUsers.find(user => user.id === Number(id));
+  console.log(`findById called with id=${id}, found user:`, user);
+  return user;
 }
 
 
@@ -84,6 +92,31 @@ function updateProfile(username, newData) {
   return true;
 }
 
+
+function createUser(newUser) {
+  if (findByUsername(newUser.username)) {
+    return false; // user already exists
+  }
+
+  // You may want to assign a new unique ID
+  const maxId = localUsers.reduce((max, u) => u.id > max ? u.id : max, 0);
+  newUser.id = maxId + 1; 
+  // Set default flags if missing
+  if (typeof newUser.isAdmin === 'undefined') newUser.isAdmin = false;
+  if (typeof newUser.canLoginLocally === 'undefined') newUser.canLoginLocally = true;
+  if (!newUser.authType) newUser.authType = 'local';
+
+  localUsers.push(newUser);
+  return newUser;
+}
+
+module.exports = {
+  // existing exports ...
+  createUser,
+};
+
+
+
 // Export everything you need
 module.exports = {
   findByUsername,
@@ -93,5 +126,6 @@ module.exports = {
   setAdmin,
   findById,
   updateProfile,
+  createUser,
 };
 

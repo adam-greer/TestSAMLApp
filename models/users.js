@@ -1,44 +1,65 @@
+// models/users.js
+
+// In-memory user store (example)
 const localUsers = [
   {
     id: 1,
     username: 'admin',
-    password: 'password', // plaintext for now; later can migrate to hashes
-    displayName: 'Admin User',
+    passwordHash: '', // or whatever your validatePassword uses
     firstName: 'Admin',
     lastName: 'User',
     email: 'admin@example.com',
-    manager: '',
-    title: 'Administrator',
     isAdmin: true,
     authType: 'local',
     canLoginLocally: true
-    // Add other fields as needed
-  }
+  },
+  // ...other users...
 ];
 
-// Find user by username
+/**
+ * Find a user by their username.
+ */
 function findByUsername(username) {
   return localUsers.find(u => u.username === username);
 }
 
-// Find user by id
 function findById(id) {
-  return localUsers.find(u => u.id === id);
+  return localUsers.find(user => user.id === id);
 }
 
-// Validate password for username
+
+/**
+ * (If you need this for passport-local) Validate password.
+ * Replace with your real hash check.
+ */
 function validatePassword(username, password) {
   const user = findByUsername(username);
-  if (!user) return false;
-  return user.password === password;
+  return user && password === 'password'; // dummy check
 }
 
-// Get all users (for admin user list page)
+/**
+ * Return the full list of users.
+ */
 function getAll() {
   return localUsers;
 }
 
-// Set or unset admin flag on a user
+/**
+ * Compute simple statistics about your user base.
+ */
+function getUserStats() {
+  const users = getAll();
+  return {
+    total: users.length,
+    admins: users.filter(u => u.isAdmin).length,
+    localLogins: users.filter(u => u.canLoginLocally).length,
+    samlLogins: users.filter(u => u.authType === 'saml').length,
+  };
+}
+
+/**
+ * Toggle admin flag on a user.
+ */
 function setAdmin(username, isAdmin) {
   const user = findByUsername(username);
   if (!user) return false;
@@ -46,50 +67,13 @@ function setAdmin(username, isAdmin) {
   return true;
 }
 
-// Update user profile
-function updateProfile(username, updates) {
-  const user = findByUsername(username);
-  if (!user) return false;
-  
-  // Update the user object with the provided fields
-  if (updates.firstName !== undefined) user.firstName = updates.firstName;
-  if (updates.lastName !== undefined) user.lastName = updates.lastName;
-  if (updates.displayName !== undefined) user.displayName = updates.displayName;
-  if (updates.manager !== undefined) user.manager = updates.manager;
-  if (updates.title !== undefined) user.title = updates.title;
-  if (updates.email !== undefined) user.email = updates.email;
-  
-  return true; // Return true to indicate success
-}
-
-// Add a new user (for future use)
-function addUser(userData) {
-  const newId = Math.max(...localUsers.map(u => u.id)) + 1;
-  const newUser = {
-    id: newId,
-    username: userData.username,
-    password: userData.password,
-    displayName: userData.displayName || userData.username,
-    firstName: userData.firstName || '',
-    lastName: userData.lastName || '',
-    email: userData.email || '',
-    manager: userData.manager || '',
-    title: userData.title || '',
-    isAdmin: userData.isAdmin || false,
-    authType: userData.authType || 'local',
-    canLoginLocally: userData.canLoginLocally !== undefined ? userData.canLoginLocally : true
-  };
-  
-  localUsers.push(newUser);
-  return newUser;
-}
-
+// Export everything you need
 module.exports = {
   findByUsername,
-  findById,
   validatePassword,
   getAll,
+  getUserStats,
   setAdmin,
-  updateProfile,
-  addUser
+  findById,
 };
+

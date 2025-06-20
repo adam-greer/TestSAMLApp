@@ -27,6 +27,7 @@ const { ensureLoggedIn, ensureAdmin } = require('./middleware/auth');
 
 // Import user model
 const users = require('./models/users');
+console.log('Users module keys:', Object.keys(users));
 
 const app = express();
 
@@ -55,7 +56,9 @@ app.use(passport.session());
 app.use(flash());
 
 app.use((req, res, next) => {
-  res.locals.title = 'MyApp'; // default title
+  res.locals.user     = req.user || null;
+  res.locals.isAdmin  = req.user?.isAdmin || false;
+  res.locals.messages = req.flash();
   next();
 });
 
@@ -235,11 +238,6 @@ passport.serializeUser((user, done) => {
   done(null, { id: user.id, username: user.username });
 });
 
-passport.deserializeUser((obj, done) => {
-  // Use the user model to find users
-  const user = users.findById(obj.id) || users.findByUsername(obj.username) || obj;
-  done(null, user);
-});
 
 // === Global Template Variables & Gravatar ===
 app.use((req, res, next) => {
@@ -418,6 +416,7 @@ const adminRouter = require('./routes/admin');
 const profileRouter = require('./routes/profile');
 const usersRouter = require('./routes/userRoutes'); // This should now work properly
 const uploadRouter = require('./routes/upload');
+console.log('[DEBUG] Requiring commentsRouter...');
 const commentsRouter = require('./routes/comments');
 
 // Mount routers

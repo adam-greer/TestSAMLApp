@@ -86,6 +86,51 @@ router.get('/users', ensureAdmin, (req, res) => {
   });
 });
 
+
+// Admin edit user form
+
+router.get('/users/edit/:id', ensureAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  const targetUser = userModel.findById(id);
+
+  if (!targetUser) {
+    return res.status(404).render('error', {
+      title: 'User Not Found',
+      error: { status: 404, message: 'User not found' }
+    });
+  }
+  console.log(targetUser);
+  res.render('admin-users-edit', {
+    title: `Edit User: ${targetUser.username}`,
+    user: req.user,
+    isAdmin: req.user.isAdmin,
+    editUser: targetUser,
+    messages: req.flash()
+  });
+});
+
+
+// update edited users fields
+
+router.post('/users/edit/:username', ensureAdmin, (req, res) => {
+  const targetUser = userModel.findByUsername(req.params.username);
+
+  if (!targetUser) {
+    req.flash('error', 'User not found');
+    return res.redirect('/admin/users');
+  }
+
+  // Update allowed fields
+  targetUser.firstName = req.body.firstName || targetUser.firstName;
+  targetUser.lastName = req.body.lastName || targetUser.lastName;
+  targetUser.displayName = req.body.displayName || targetUser.displayName;
+  targetUser.email = req.body.email || targetUser.email;
+
+  req.flash('success', 'User updated successfully');
+  res.redirect('/admin/users');
+});
+
+
 // Toggle admin status for a user
 router.post('/users/:username/toggle-admin', ensureAdmin, (req, res) => {
   const { username } = req.params;

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - SAML Training App</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h2 class="mb-4">Login</h2>
+
+    <% if (typeof error !== "undefined" && error) { %>
+      <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <!-- Local login form -->
+    <form method="POST" action="/login" class="mb-3">
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" name="username" id="username" required class="form-control" />
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" name="password" id="password" required class="form-control" />
+      </div>
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+
+    <% if (typeof samlEnabled !== "undefined" && samlEnabled) { %>
+      <hr />
+      <h5>Or login with SAML SSO</h5>
+      <a href="/login/saml" class="btn btn-outline-primary">Login with SAML</a>
+    <% } %>
+  </div>
+</body>
+</html>
+

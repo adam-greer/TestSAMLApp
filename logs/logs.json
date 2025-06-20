@@ -1,0 +1,926 @@
+[
+  {
+    "timestamp": "2025-06-18T20:19:15.525Z",
+    "type": "auth",
+    "message": "Local login successful",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:18:16.088Z",
+    "type": "auth",
+    "message": "Local login successful",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:18:08.485Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:10:23.387Z",
+    "type": "auth",
+    "message": "Local login successful",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:08:35.580Z",
+    "type": "auth",
+    "message": "Local login successful",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:08:22.329Z",
+    "type": "auth",
+    "message": "Failed login: user admdin not found",
+    "user": "admdin"
+  },
+  {
+    "timestamp": "2025-06-18T20:08:18.524Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:08:09.064Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:07:06.587Z",
+    "type": "auth",
+    "message": "Local login successful",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:05:06.637Z",
+    "type": "auth",
+    "message": "Local login successful",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T20:05:01.170Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T19:53:28.064Z",
+    "type": "auth",
+    "message": "Local login successful",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T19:53:24.354Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T19:45:33.091Z",
+    "type": "auth",
+    "message": "Local login successful",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T19:37:48.249Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T19:36:52.599Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T19:36:22.494Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T19:36:18.988Z",
+    "type": "auth",
+    "message": "Failed login: wrong password for admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:28:23.532Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:28:23.478Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:28:23.413Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:28:20.545Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:26:47.514Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:26:47.190Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:26:33.355Z",
+    "type": "access",
+    "message": "GET /actuator/gateway/routes",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:25:29.591Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:25:29.525Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:25:29.460Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:25:26.669Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:23:15.428Z",
+    "type": "access",
+    "message": "GET /login/saml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:21:32.259Z",
+    "type": "access",
+    "message": "GET /.git/config",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:20:45.471Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:20:45.412Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:20:45.343Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:20:42.639Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:19:30.395Z",
+    "type": "access",
+    "message": "GET /favicon.ico",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:16:25.743Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:16:25.680Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:16:25.615Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:14:48.931Z",
+    "type": "access",
+    "message": "GET /login/saml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:14:38.235Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:14:38.183Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:14:38.119Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:14:35.330Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:13:47.885Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:13:47.826Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:13:47.758Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:13:44.383Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:06.175Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:06.125Z",
+    "type": "auth",
+    "message": "Failed login attempt for user adam",
+    "user": "adam"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:06.124Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:04.132Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:04.088Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:04.023Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:01.347Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:01.299Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:09:01.235Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:08:58.000Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:08:57.949Z",
+    "type": "auth",
+    "message": "Failed login attempt for user admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:08:57.886Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:08:54.438Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:08:54.374Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:08:51.668Z",
+    "type": "access",
+    "message": "GET /login/saml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:25.961Z",
+    "type": "access",
+    "message": "GET /login/saml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:25.028Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:24.983Z",
+    "type": "access",
+    "message": "GET /logout",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:08.217Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:07.603Z",
+    "type": "access",
+    "message": "GET /admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:04.093Z",
+    "type": "access",
+    "message": "GET /dashboard",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:04.053Z",
+    "type": "auth-success",
+    "message": "User logged in: admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:04.052Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:00.178Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:00.135Z",
+    "type": "auth-failure",
+    "message": "Failed login attempt for username: admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T18:00:00.133Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:59:56.661Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:59:56.610Z",
+    "type": "access",
+    "message": "GET /logout",
+    "user": "adam"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:20.492Z",
+    "type": "access",
+    "message": "GET /comments",
+    "user": "adam"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:20.448Z",
+    "type": "access",
+    "message": "POST /comments",
+    "user": "adam"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:10.885Z",
+    "type": "access",
+    "message": "GET /comments",
+    "user": "adam"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:09.865Z",
+    "type": "access",
+    "message": "GET /dashboard",
+    "user": "adam"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:09.819Z",
+    "type": "auth-success",
+    "message": "User logged in: adam",
+    "user": "adam"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:09.817Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:07.496Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:07.447Z",
+    "type": "access",
+    "message": "GET /logout",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:04.666Z",
+    "type": "access",
+    "message": "GET /admin/users",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:58:04.620Z",
+    "type": "access",
+    "message": "POST /admin/users/create",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:53.072Z",
+    "type": "access",
+    "message": "GET /admin/users/create",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:51.253Z",
+    "type": "access",
+    "message": "GET /admin/users",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:48.968Z",
+    "type": "access",
+    "message": "GET /admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:45.146Z",
+    "type": "access",
+    "message": "GET /dashboard",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:45.094Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:35.969Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:34.874Z",
+    "type": "access",
+    "message": "GET /admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:33.422Z",
+    "type": "access",
+    "message": "GET /dashboard",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:33.375Z",
+    "type": "auth-success",
+    "message": "User logged in: admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:33.369Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:30.381Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:30.322Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:57:28.567Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:56:17.265Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:56:16.554Z",
+    "type": "access",
+    "message": "GET /admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:56:15.647Z",
+    "type": "access",
+    "message": "GET /dashboard",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:56:15.594Z",
+    "type": "auth-success",
+    "message": "User logged in: admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:56:15.589Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:56:11.775Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:56:11.720Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:56:10.150Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:55:11.990Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:55:11.481Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.873Z",
+    "type": "access",
+    "message": "GET //sito/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.801Z",
+    "type": "access",
+    "message": "GET //cms/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.731Z",
+    "type": "access",
+    "message": "GET //site/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.661Z",
+    "type": "access",
+    "message": "GET //wp2/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.596Z",
+    "type": "access",
+    "message": "GET //media/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.528Z",
+    "type": "access",
+    "message": "GET //test/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.459Z",
+    "type": "access",
+    "message": "GET //wp1/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.391Z",
+    "type": "access",
+    "message": "GET //shop/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.321Z",
+    "type": "access",
+    "message": "GET //2019/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.253Z",
+    "type": "access",
+    "message": "GET //2018/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.183Z",
+    "type": "access",
+    "message": "GET //news/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.115Z",
+    "type": "access",
+    "message": "GET //wp/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:57.047Z",
+    "type": "access",
+    "message": "GET //website/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:56.977Z",
+    "type": "access",
+    "message": "GET //wordpress/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:56.908Z",
+    "type": "access",
+    "message": "GET //web/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:56.837Z",
+    "type": "access",
+    "message": "GET //blog/wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:56.766Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:56.695Z",
+    "type": "access",
+    "message": "GET //xmlrpc.php?rsd",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:56.621Z",
+    "type": "access",
+    "message": "GET //wp-includes/wlwmanifest.xml",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:56.549Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:51.982Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:51.252Z",
+    "type": "access",
+    "message": "GET /admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:50.215Z",
+    "type": "access",
+    "message": "GET /dashboard",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:50.169Z",
+    "type": "auth-success",
+    "message": "User logged in: admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:50.165Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:46.163Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:46.107Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:53:43.800Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:59.120Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:58.114Z",
+    "type": "access",
+    "message": "GET /admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:55.853Z",
+    "type": "access",
+    "message": "GET /dashboard",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:55.805Z",
+    "type": "auth-success",
+    "message": "User logged in: admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:55.802Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:52.244Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:52.188Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:49.866Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:51:41.596Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:47:23.554Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:47:22.563Z",
+    "type": "access",
+    "message": "GET /admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:47:21.333Z",
+    "type": "access",
+    "message": "GET /dashboard",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:47:21.275Z",
+    "type": "auth-success",
+    "message": "User logged in: admin",
+    "user": "admin"
+  },
+  {
+    "timestamp": "2025-06-18T17:47:21.272Z",
+    "type": "access",
+    "message": "POST /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:47:16.163Z",
+    "type": "access",
+    "message": "GET /login",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:47:16.102Z",
+    "type": "access",
+    "message": "GET /",
+    "user": "anonymous"
+  },
+  {
+    "timestamp": "2025-06-18T17:47:13.338Z",
+    "type": "access",
+    "message": "GET /admin/logs",
+    "user": "anonymous"
+  }
+]

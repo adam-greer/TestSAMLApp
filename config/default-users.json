@@ -1,0 +1,12 @@
+{
+  "username": "admin",
+  "password": "admin123",
+  "email": "admin@example.com",
+  "firstName": "System",
+  "lastName": "Administrator",
+  "displayName": "Admin",
+  "manager": "none",
+  "isAdmin": true,
+  "authType": "local"
+}
+

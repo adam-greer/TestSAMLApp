@@ -1,0 +1,24 @@
+<div class="container mt-4">
+  <h2>📜 System Logs</h2>
+  <table class="table table-bordered table-hover">
+    <thead class="table-light">
+      <tr>
+        <th>Timestamp</th>
+        <th>User</th>
+        <th>Type</th>
+        <th>Message</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% logs.forEach(log => { %>
+        <tr>
+          <td><%= new Date(log.timestamp).toLocaleString() %></td>
+          <td><%= log.user %></td>
+          <td><%= log.type %></td>
+          <td><%= log.message %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+

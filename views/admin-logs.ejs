@@ -1,0 +1,17 @@
+<h1><%= title %></h1>
+
+<% if (!logs || logs.length === 0) { %>
+  <p>No logs available.</p>
+<% } else { %>
+  <ul>
+    <% logs.forEach(log => { %>
+      <li>
+        <strong><%= log.timestamp %></strong> — 
+        <%= log.type %> — 
+        <%= log.message %> — 
+        <em><%= log.user %></em>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>
+

@@ -1,0 +1,46 @@
+<!-- views/users.ejs -->
+
+<div class="card shadow">
+  <div class="card-header bg-secondary text-white">
+    User Directory
+  </div>
+  <div class="card-body">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Display Name</th>
+          <th>Email</th>
+          <th>Manager</th>
+          <th>Admin</th>
+          <th>Auth Type</th>
+          <% if (user.isAdmin) { %><th>Actions</th><% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% allUsers.forEach(u => { %>
+          <tr>
+            <td><%= u.username %></td>
+            <td><%= u.displayName %></td>
+            <td><%= u.email %></td>
+            <td><%= u.manager %></td>
+            <td><%= u.isAdmin ? 'Yes' : 'No' %></td>
+            <td><%= u.authType %></td>
+            <% if (user.isAdmin) { %>
+              <td>
+                <% if (!u.isAdmin) { %>
+                  <form action="/users/<%= u.username %>/promote" method="POST" class="d-inline">
+                    <button class="btn btn-sm btn-outline-success">Make Admin</button>
+                  </form>
+                <% } else { %>
+                  <span class="text-muted">Admin</span>
+                <% } %>
+              </td>
+            <% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+

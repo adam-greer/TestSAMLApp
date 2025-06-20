@@ -1,0 +1,149 @@
+// routes/admin.js
+
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const forge = require('node-forge');
+const xml2js = require('xml2js');
+const upload = require('../routes/upload'); // Assuming you use multer
+const { ensureLoggedIn, ensureAdmin } = require('../routes/auth'); // Adjust path as needed
+const router = express.Router();
+
+// In-memory comment store (move to DB later)
+const comments = [];
+const CONFIG_PATH = path.join(__dirname, '../admin/saml-config.json');
+const CERT_PATH = path.join(__dirname, '../admin/cert.pem');
+const KEY_PATH = path.join(__dirname, '../admin/key.pem');
+
+const samlp = require('samlp');
+
+// Show comments page
+router.get('/comments', ensureLoggedIn, (req, res) => {
+  res.render('comments', { comments, title: 'Comments' });
+});
+
+router.post('/comments', ensureLoggedIn, (req, res) => {
+  const user = req.user.username || 'Anonymous';
+  const text = req.body.comment || '';
+  if (text.trim()) {
+    comments.push({ id: comments.length + 1, user, text });
+    req.flash('success', 'Comment added!');
+  } else {
+    req.flash('error', 'Comment cannot be empty.');
+  }
+  res.redirect('/admin/comments');
+});
+
+// Show SAML config page
+router.get('/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
+  let configText = '{}';
+  let config = {};
+  try {
+    configText = fs.readFileSync(CONFIG_PATH, 'utf-8');
+    config = JSON.parse(configText);
+  } catch (_) {}
+  res.render('admin-saml-config', { title: 'Edit SAML Config', configText, config });
+});
+
+// Save SAML config
+router.post('/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
+  const configText = req.body.configText || '{}';
+  try {
+    JSON.parse(configText); // validate
+    fs.writeFileSync(CONFIG_PATH, configText, 'utf-8');
+    req.flash('success', 'SAML config saved successfully.');
+    require('../loadSamlConfig')(); // or however you re-load
+  } catch (err) {
+    req.flash('error', 'Invalid JSON format: ' + err.message);
+  }
+  res.redirect('/admin/saml-config');
+});
+
+// Generate new cert
+router.post('/saml-config/generate-cert', ensureLoggedIn, ensureAdmin, (req, res) => {
+  try {
+    const pki = forge.pki;
+    const keys = pki.rsa.generateKeyPair(2048);
+    const cert = pki.createCertificate();
+
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = '01';
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 2);
+
+    const attrs = [{ name: 'commonName', value: 'TestSAMLApp' }];
+    cert.setSubject(attrs);
+    cert.setIssuer(attrs);
+    cert.sign(keys.privateKey);
+
+    const certPem = pki.certificateToPem(cert);
+    const keyPem = pki.privateKeyToPem(keys.privateKey);
+
+    fs.writeFileSync(KEY_PATH, keyPem);
+    fs.writeFileSync(CERT_PATH, certPem);
+
+    const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    config.cert = certPem;
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+
+    require('../loadSamlConfig')(); // Reload
+
+    req.flash('success', 'New certificate generated.');
+    res.redirect('/admin/saml-config');
+  } catch (err) {
+    console.error('Cert generation error:', err);
+    res.status(500).send('Failed to generate cert');
+  }
+});
+
+// Upload metadata
+router.post('/saml-config/upload-metadata', ensureLoggedIn, ensureAdmin, upload.single('metadata'), (req, res) => {
+  if (!req.file) {
+    req.flash('error', 'No file uploaded');
+    return res.redirect('/admin/saml-config');
+  }
+
+  const xmlPath = req.file.path;
+  const xmlData = fs.readFileSync(xmlPath, 'utf-8');
+
+  xml2js.parseString(xmlData, (err, result) => {
+    if (err) {
+      req.flash('error', 'Invalid XML: ' + err.message);
+      fs.unlinkSync(xmlPath);
+      return res.redirect('/admin/saml-config');
+    }
+
+    try {
+      const entityDescriptor = result['EntityDescriptor'];
+      const idpSSODescriptor = entityDescriptor['IDPSSODescriptor']?.[0];
+      const sso = idpSSODescriptor['SingleSignOnService']?.find(s => s.$.Binding.includes('HTTP-Redirect'));
+      const keyDescriptor = idpSSODescriptor['KeyDescriptor']?.find(k => k.$.use === 'signing');
+      const certData = keyDescriptor['KeyInfo'][0]['X509Data'][0]['X509Certificate'][0];
+
+      const samlConfig = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+      samlConfig.entryPoint = sso.$.Location;
+      samlConfig.issuer = entityDescriptor.$.entityID;
+      samlConfig.cert = formatCert(certData);
+      if (!samlConfig.callbackUrl) samlConfig.callbackUrl = 'http://localhost:3000/login/callback';
+
+      fs.writeFileSync(CONFIG_PATH, JSON.stringify(samlConfig, null, 2), 'utf-8');
+
+      require('../loadSamlConfig')();
+
+      req.flash('success', 'Metadata uploaded and config updated.');
+    } catch (parseErr) {
+      req.flash('error', 'Failed to parse metadata: ' + parseErr.message);
+    } finally {
+      fs.unlinkSync(xmlPath);
+      res.redirect('/admin/saml-config');
+    }
+  });
+});
+
+function formatCert(cert) {
+  return cert.match(/.{1,64}/g).join('\n');
+}
+
+module.exports = router;
+

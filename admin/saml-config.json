@@ -1,0 +1,14 @@
+{
+  "entryPoint": "https://login.microsoftonline.com/your-tenant-id/saml2",
+  "issuer": "your-app-identifier",
+  "callbackUrl": "http://<your-websitee>/login/callback",
+  "cert": "-----BEGIN CERTIFICATE-----\r\nMIICpTCCAY2gAwIBAgIBATANBgkqhkiG9w0BAQUFADAWMRQwEgYDVQQDEwtUZXN0\r\nU0FNTEFwcDAeFw0yNTA2MTgxNDQ3NDRaFw0yNzA2MTgxNDQ3NDRaMBYxFDASBgNV\r\nBAMTC1Rlc3RTQU1MQXBwMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA\r\nkw1QmF7KrsJM2dDLY8Tzdy6uU//ArO9I8s+bHOGchb52HZ8A9Uk/OnUrUN1dHQOO\r\ng7qQ/95GOqE5woeUAZ7jHs2WIksbzY6q9LctGoMBPMOTbdd5IPFmGjbuGgcLQMBF\r\nW9D/LG0Stl2ZQvOJ2+aJbLISQXQ6eVyKJGdOfj4DJ+gMQTyplI60qh0Z1yQ/Z71k\r\nI6GvF4yaobVtHhcroftUVTkSCGR4KAMp198f2TjqNPz9qgDx7XHkiFMJOXwVm1nw\r\nlPuxdmJ4p8xcaRcWSg1klkIdUR5gIHQ1ANvqYd5DIVkmAkjcay6r0ruvckbhcjTV\r\ntx485EhBSRDUPCqNqu148QIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQBNVabkxBxF\r\nRm73qtKocKSCwX+9n4aFBRFU4uS1cvTm1QW5csZbd0VzodzDyBT4A+onOMDLI4Tc\r\ni/eY75EvU/6JqII3wYBmj7sJbREcEHzwikCK7Nr10rBkaiSCxWmcvIpJGNAFE4RW\r\nQPhQxj/0DXFQNu1ngymRxjs9VSF99vbE1/ENvmCwzKuP12Sx7cOUPagHOHNawfWB\r\nI3aCZ8XB/wL9xij4PlKH79Vq2eNKAZe2P6BWt6sNa8TEGUzKBwlXUnQWSF8fc3Uw\r\nD5/dd1MDYEJ9BNDF28dxfq8vPgLoQ0I5l1ibP/MglPYGqr7N8bAIhyEx7YpE3xc0\r\nswKbj4s+ion2\r\n-----END CERTIFICATE-----\r\n",
+  "attributes": {
+    "displayName": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
+    "firstName": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+    "lastName": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
+    "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+    "manager": "manager",
+    "title": "title"
+  }
+}

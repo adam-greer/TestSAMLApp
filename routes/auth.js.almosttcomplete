@@ -1,0 +1,162 @@
+const express = require('express');
+const passport = require('passport');
+const router = express.Router();
+const users = require('../routes/users');
+const { logEvent } = require('../utils/logger');
+
+// Optional: move this to a config file later
+const samlEnabled = true;
+
+function ensureLoggedIn(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/login');
+}
+
+function ensureAdmin(req, res, next) {
+  if (req.isAuthenticated() && req.user?.isAdmin) {
+    return next();
+  }
+  res.status(403).send('Forbidden - Admins only');
+}
+
+// GET / - redirect to dashboard if logged in, else to login
+router.get('/', (req, res) => {
+  if (req.isAuthenticated()) {
+    return res.redirect('/dashboard');
+  }
+  res.redirect('/login');
+});
+
+// GET /login - Render login form
+router.get('/login', (req, res) => {
+  const errorMessages = req.flash('error');
+  const error = errorMessages.length > 0 ? errorMessages[0] : '';
+
+  res.render('login', {
+    title: 'Login',
+    error,
+    samlEnabled
+  });
+});
+
+// POST /login - Local auth handler
+router.post('/login', (req, res, next) => {
+  const { username, password } = req.body;
+  const user = users.findByUsername(username);
+
+  if (!user) {
+    logEvent({ type: 'auth', message: `Failed login: user ${username} not found`, user: username });
+    req.flash('error', 'Invalid username or password.');
+    return res.redirect('/login');
+  }
+
+  // Deny local login if SAML is required for this user
+  if (user.authType === 'saml' || user.canLoginLocally === false) {
+    logEvent({ type: 'auth', message: `Local login blocked for ${username}`, user: username });
+    req.flash('error', 'This account requires login via SAML SSO.');
+    return res.redirect('/login');
+  }
+
+  if (!users.validatePassword(username, password)) {
+    logEvent({ type: 'auth', message: `Failed login: wrong password for ${username}`, user: username });
+    req.flash('error', 'Invalid username or password.');
+    return res.redirect('/login');
+  }
+
+  req.login(user, (err) => {
+    if (err) return next(err);
+
+    logEvent({ type: 'auth', message: 'Local login successful', user: username });
+    res.redirect('/dashboard');
+  });
+});
+
+router.get('/dashboard', ensureLoggedIn, (req, res) => {
+  res.render('dashboard', { user: req.user });
+});
+
+
+// GET /logout - Logout handler
+router.get('/logout', (req, res, next) => {
+  if (req.user) {
+    logEvent({
+      type: 'auth',
+      message: 'User logged out',
+      user: req.user.username || req.user.email || 'unknown'
+    });
+  }
+
+  req.logout(err => {
+    if (err) return next(err);
+    res.redirect('/login');
+  });
+});
+
+// GET /saml/login - Start SAML auth
+router.get('/saml/login', passport.authenticate('saml'));
+
+// POST /saml/acs - Handle SAML response
+router.post('/saml/acs',
+  passport.authenticate('saml', {
+    failureRedirect: '/login',
+    failureFlash: true
+  }),
+  (req, res) => {
+    const profile = req.user;
+
+    req.user.username = profile.nameID;
+    req.user.email = profile.email || '';
+    req.user.firstName = profile.firstName || '';
+    req.user.lastName = profile.lastName || '';
+    req.user.displayName = profile.displayName || profile.cn || profile.nameID;
+    req.user.manager = profile.manager || '';
+    req.user.authType = 'saml';
+    req.user.samlAssertion = typeof profile.getAssertionXml === 'function' ? profile.getAssertionXml() : '';
+
+    logEvent({
+      type: 'saml',
+      message: 'SAML login successful',
+      user: req.user.email || req.user.username
+    });
+
+    res.redirect('/dashboard');
+  });
+// GET /admin/users - List all users
+router.get('/admin/users', ensureLoggedIn, ensureAdmin, (req, res) => {
+    const allUsers = users.getAll();
+    res.render('users', {
+    user: req.user,
+    allUsers
+  });
+});
+
+// GET /profilee - List all users
+router.get('/profile', ensureLoggedIn, (req, res) => {
+    const allUsers = users.getAll();
+    res.render('profile', {
+    user: req.user,
+    ttitlee: 'Your Profile'
+  });
+});
+
+
+// POST /profile - Update profile
+router.post('/profile', ensureLoggedIn, (req, res) => {
+  const user = users.findByUsername(req.user.username);
+  if (user) {
+    user.firstName = req.body.firstName;
+    user.lastName = req.body.lastName;
+    user.displayName = req.body.displayName;
+    user.email = req.body.email;
+    user.manager = req.body.manager;
+    req.flash('success', 'Profile updated.');
+  }
+  res.redirect('/profile');
+});
+
+
+
+module.exports = router;
+

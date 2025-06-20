@@ -1,0 +1,11 @@
+<h1><%= title %></h1>
+<ul>
+  <% comments.forEach(c => { %>
+    <li><strong><%= c.user %></strong>: <%= c.text %></li>
+  <% }) %>
+</ul>
+<form method="POST" action="/comments">
+  <textarea name="comment" rows="3" required></textarea><br>
+  <button type="submit">Add Comment</button>
+</form>
+

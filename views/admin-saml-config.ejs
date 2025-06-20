@@ -1,0 +1,46 @@
+<h1><%= title %></h1>
+
+<% if (messages.error) { %>
+  <div class="alert alert-danger"><%= messages.error.join(', ') %></div>
+<% } %>
+<% if (messages.success) { %>
+  <div class="alert alert-success"><%= messages.success.join(', ') %></div>
+<% } %>
+
+<form method="POST" action="/admin/saml-config">
+  <textarea name="configText" rows="25" style="width:100%; font-family: monospace;"><%= configText %></textarea>
+  <br>
+  <button type="submit" class="btn btn-primary mt-2">Save</button>
+</form>
+
+<% if (config && config.cert) { %>
+  <div class="alert alert-info mt-3">
+    <strong>Current Cert:</strong><br>
+    <pre style="font-size: 0.75rem"><%= config.cert %></pre>
+  </div>
+<% } %>
+
+
+<hr>
+<form method="POST" action="/admin/saml-config/generate-cert" onsubmit="return confirm('Generate a new x509 cert and update metadata?')">
+  <button type="submit" class="btn btn-warning mt-2">🔐 Generate New X.509 Certificate</button>
+</form>
+
+<h3>Upload Azure AD Metadata XML</h3>
+<form action="/admin/saml-config/upload-metadata" method="post" enctype="multipart/form-data" class="mb-4">
+  <div class="mb-3">
+    <input type="file" name="metadata" id="metadata" accept=".xml" required class="form-control" />
+  </div>
+  <button type="submit" class="btn btn-primary">Upload Metadata</button>
+</form>
+
+
+<div class="mt-4">
+  <h3>Metadata Files</h3>
+  <a href="/saml/metadata" class="btn btn-outline-primary btn-sm" target="_blank">View Our Metadata (SP)</a>
+  <a href="https://login.microsoftonline.com/<%= config.tenantId || 'YOUR_TENANT_ID' %>/federationmetadata/2007-06/federationmetadata.xml" class="btn btn-outline-secondary btn-sm" target="_blank">Azure AD Metadata</a>
+</div>
+
+
+<a href="/admin">Back to Admin Panel</a>
+

@@ -1,0 +1,45 @@
+<h5>SAML Attribute Mapping</h5>
+<div class="mb-3">
+  <label for="username" class="form-label">Username Attribute</label>
+  <input type="text" class="form-control" id="username" name="attributeMapping[username]" value="<%= config.attributeMapping.username %>" required>
+</div>
+<div class="mb-3">
+  <label for="email" class="form-label">Email Attribute</label>
+  <input type="text" class="form-control" id="email" name="attributeMapping[email]" value="<%= config.attributeMapping.email %>" required>
+</div>
+<div class="mb-3">
+  <label for="firstName" class="form-label">First Name Attribute</label>
+  <input type="text" class="form-control" id="firstName" name="attributeMapping[firstName]" value="<%= config.attributeMapping.firstName %>" required>
+</div>
+<div class="mb-3">
+  <label for="lastName" class="form-label">Last Name Attribute</label>
+  <input type="text" class="form-control" id="lastName" name="attributeMapping[lastName]" value="<%= config.attributeMapping.lastName %>" required>
+</div>
+<div class="mb-3">
+  <label for="displayName" class="form-label">Display Name Attribute</label>
+  <input type="text" class="form-control" id="displayName" name="attributeMapping[displayName]" value="<%= config.attributeMapping.displayName %>" required>
+</div>
+<div class="mb-3">
+  <label for="manager" class="form-label">Manager Attribute</label>
+  <input type="text" class="form-control" id="manager" name="attributeMapping[manager]" value="<%= config.attributeMapping.manager %>">
+</div>
+<div class="mb-3">
+  <label for="title" class="form-label">Title Attribute</label>
+  <input type="text" class="form-control" id="title" name="attributeMapping[title]" value="<%= config.attributeMapping.title %>">
+</div>
+</br>
+<form action="/admin/saml-config/upload-metadata" method="post" enctype="multipart/form-data">
+  <label for="metadata">Upload Azure AD Metadata XML:</label>
+  <input type="file" name="metadata" id="metadata" accept=".xml" required />
+  <button type="submit">Upload</button>
+</form>
+
+
+<div class="mt-4">
+  <h3>Metadata Files</h3>
+  <p>
+    <a href="/saml/metadata" target="_blank" class="btn btn-outline-primary btn-sm">View Our App Metadata</a>
+    <a href="https://login.microsoftonline.com/<TENANT_ID>/federationmetadata/2007-06/federationmetadata.xml" target="_blank" class="btn btn-outline-secondary btn-sm">View Azure AD Metadata</a>
+  </p>
+</div>
+

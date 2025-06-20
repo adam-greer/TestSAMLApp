@@ -1,0 +1,520 @@
+const express = require('express');
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const SamlStrategy = require('passport-saml').Strategy;
+const fs = require('fs');
+const path = require('path');
+const bodyParser = require('body-parser');
+const flash = require('connect-flash');
+const expressLayouts = require('express-ejs-layouts');
+const crypto = require('crypto');
+const router = express.Router();
+const app = express();
+
+app.set('view engine', 'ejs');
+app.use(expressLayouts);
+app.set('layout', 'layout');
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use(session({
+  secret: 'keyboard cat saml training',
+  resave: false,
+  saveUninitialized: false,
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
+
+app.use((req, res, next) => {
+  res.locals.user = req.user || null;
+  res.locals.isAdmin = req.user?.isAdmin || false;
+  res.locals.messages = req.flash();
+
+  if (req.user && req.user.email) {
+    const md5 = crypto.createHash('md5').update(req.user.email.trim().toLowerCase()).digest('hex');
+    res.locals.user.avatar = `https://www.gravatar.com/avatar/${md5}?d=identicon`;
+  } else if (res.locals.user) {
+    res.locals.user.avatar = 'https://www.gravatar.com/avatar?d=identicon';
+  }
+  next();
+});
+
+const { logEvent } = require('./utils/logger');
+app.use((req, res, next) => {
+  const user = req.user ? req.user.username || req.user.id : 'anonymous';
+  logEvent({
+    type: 'access',
+    message: `${req.method} ${req.originalUrl}`,
+    user
+  });
+  next();
+});
+
+ 
+const authRoutes = require('./routes/auth');
+app.use('/', authRoutes);
+
+
+const localUsers = [
+  {
+    id: 1,
+    username: 'admin',
+    password: 'password',
+    displayName: 'Admin User',
+    firstName: 'Admin',
+    lastName: 'User',
+    email: 'admin@example.com',
+    manager: '',
+    title: 'Administrator',
+    authType: 'local',
+    isAdmin: true
+  }
+];
+
+passport.use(new LocalStrategy((username, password, done) => {
+  console.log('LocalStrategy:', { username, password });
+  const user = localUsers.find(u => u.username === username);
+  if (!user) {
+    console.log('User not found');
+    return done(null, false, { message: 'Invalid credentials' });
+  }
+  if (user.password !== password) {
+    console.log('Incorrect password');
+    return done(null, false, { message: 'Invalid credentials' });
+  }
+  console.log('User authenticated:', user.username);
+  return done(null, user);
+}));
+
+let samlConfig = null;
+let samlEnabled = false;
+let samlStrategy = null;
+
+
+function loadSamlConfig() {
+  const configPath = path.join(__dirname, 'admin', 'saml-config.json');
+  try {
+    // If the config file does not exist, create an empty one
+    if (!fs.existsSync(configPath)) {
+      fs.writeFileSync(configPath, '{}', 'utf-8');
+      console.log('Created empty saml-config.json');
+    }
+
+    const raw = fs.readFileSync(configPath, 'utf-8');
+    const cfg = JSON.parse(raw);
+
+    if (cfg.cert && cfg.entryPoint && cfg.issuer && cfg.callbackUrl) {
+      samlEnabled = true;
+      samlConfig = cfg;
+      console.log('SAML config loaded, SAML login enabled');
+      setupSamlStrategy();
+    } else {
+      samlEnabled = false;
+      console.warn('SAML config missing required fields or cert, SAML login disabled');
+    }
+  } catch (err) {
+    samlEnabled = false;
+    console.warn('Could not load SAML config, SAML login disabled:', err.message);
+  }
+}
+
+function setupSamlStrategy() {
+  if (!samlConfig) return;
+  if (samlStrategy) {
+    passport.unuse('saml');
+  }
+
+  samlStrategy = new SamlStrategy({
+    entryPoint: samlConfig.entryPoint,
+    issuer: samlConfig.issuer,
+    callbackUrl: samlConfig.callbackUrl,
+    cert: samlConfig.cert,
+  }, function(profile, done) {
+    const user = {
+      id: profile.nameID,
+      username: profile.nameID,
+      email: profile[samlConfig.attributes?.email] || '',
+      firstName: profile[samlConfig.attributes?.firstName] || '',
+      lastName: profile[samlConfig.attributes?.lastName] || '',
+      displayName: profile[samlConfig.attributes?.displayName] || '',
+      manager: profile[samlConfig.attributes?.manager] || '',
+      title: profile[samlConfig.attributes?.title] || '',
+      authType: 'saml',
+      samlAssertion: profile._raw || '',
+      isAdmin: false
+    };
+
+    logEvent({
+      type: 'auth-saml',
+      message: 'SAML login for user: ${user.username}',
+      user: user.username
+    });
+    return done(null, user);
+  });
+
+  passport.use('saml', samlStrategy);
+}
+
+loadSamlConfig();
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  const user = localUsers.find(u => u.id === id);
+  done(null, user || null);
+});
+
+function ensureLoggedIn(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/login');
+}
+
+function ensureAdmin(req, res, next) {
+  if (req.isAuthenticated() && req.user?.isAdmin) {
+    return next();
+  }
+  res.status(403).send('Forbidden - Admins only');
+}
+
+const multer = require('multer');
+const upload = multer({ dest: path.join(__dirname, 'admin', 'uploads') });
+
+
+
+app.get('/', (req, res) => {
+  if (req.isAuthenticated()) return res.redirect('/dashboard');
+  res.redirect('/login');
+});
+
+app.get('/login', (req, res) => {
+  res.render('login', { samlEnabled, error: null, title: 'Login' });
+});
+
+app.post('/login', (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) { return next(err); }
+    if (!user) {
+      logEvent({
+        type: 'auth-failure',
+        message: `Failed login attempt for username: ${req.body.username}`,
+        user: req.body.username || 'unknown'
+      });
+      req.flash('error', info.message);
+      return res.redirect('/login');
+    }
+    req.logIn(user, (err) => {
+      if (err) { return next(err); }
+      logEvent({
+        type: 'auth-success',
+        message: `User logged in: ${user.username}`,
+        user: user.username
+      });
+      return res.redirect('/dashboard');
+    });
+  })(req, res, next);
+});
+app.get('/logout', (req, res, next) => {
+  req.logout(err => {
+    if (err) return next(err);
+    res.redirect('/login');
+  });
+});
+
+app.get('/dashboard', ensureLoggedIn, (req, res) => {
+  const user = localUsers.find(u => u.username === req.user.username) || req.user;
+  res.render('dashboard', { user, title: 'Dashboard' });
+});
+
+app.get('/profile', ensureLoggedIn, (req, res) => {
+  const user = localUsers.find(u => u.username === req.user.username) || req.user;
+  res.render('profile', { user, title: 'My Profile' });
+});
+
+app.post('/profile', ensureLoggedIn, (req, res) => {
+  const user = localUsers.find(u => u.username === req.user.username);
+  if (user) {
+    user.firstName = req.body.firstName;
+    user.lastName = req.body.lastName;
+    user.displayName = req.body.displayName;
+    user.email = req.body.email;
+    user.manager = req.body.manager;
+    req.flash('success', 'Profile updated.');
+  }
+  res.redirect('/profile');
+});
+
+app.get('/admin', ensureLoggedIn, ensureAdmin, (req, res) => {
+  res.render('admin', { title: 'Admin Panel' });
+});
+
+app.get('/admin/users', ensureLoggedIn, ensureAdmin, (req, res) => {
+  res.render('admin-users', { title: 'User List', users: localUsers });
+});
+
+app.get('/admin/users/edit/:id', ensureLoggedIn, ensureAdmin, (req, res) => {
+  const user = localUsers.find(u => u.id === parseInt(req.params.id));
+  if (!user) return res.status(404).send('User not found');
+  res.render('admin-users-edit', { user, title: 'Edit User' });
+});
+
+app.post('/admin/users/edit/:id', ensureLoggedIn, ensureAdmin, (req, res) => {
+  const user = localUsers.find(u => u.id === parseInt(req.params.id));
+  if (!user) return res.status(404).send('User not found');
+
+  user.username = req.body.username;
+  user.firstName = req.body.firstName;
+  user.lastName = req.body.lastName;
+  user.displayName = req.body.displayName || `${req.body.firstName} ${req.body.lastName}`;
+  user.email = req.body.email;
+  user.title = req.body.title;
+  user.manager = req.body.manager;
+  user.isAdmin = req.body.isAdmin === 'on';
+  user.canLoginLocally = req.body.canLoginLocally === 'on';
+
+  req.flash('success', 'User updated.');
+  res.redirect('/admin/users');
+
+  logEvent({
+    type: 'admin-user-edit',
+    message: `User ID ${user.id} edited by ${req.user.username}. Changes: ${JSON.stringify({
+      before: oldData,
+      after: user
+    })}`
+  });
+});
+
+app.get('/admin/users/create', ensureLoggedIn, ensureAdmin, (req, res) => {
+  res.render('admin-users-create', { title: 'Create User' });
+});
+
+app.post('/admin/users/create', ensureLoggedIn, ensureAdmin, (req, res) => {
+  const newId = localUsers.length ? Math.max(...localUsers.map(u => u.id)) + 1 : 1;
+  const newUser = {
+    id: newId,
+    username: req.body.username,
+    password: req.body.password || 'password',
+    displayName: req.body.displayName || '',
+    firstName: req.body.firstName || '',
+    lastName: req.body.lastName || '',
+    email: req.body.email || '',
+    title: req.body.title || '',
+    manager: req.body.manager || '',
+    isAdmin: req.body.isAdmin === 'on',
+    authType: 'local'
+  };
+  localUsers.push(newUser);
+  req.flash('success', 'User created.');
+  res.redirect('/admin/users');
+});
+
+const comments = [
+  { id: 1, user: 'Alice', text: 'Hello from Alice' },
+  { id: 2, user: 'Bob', text: 'Hi from Bob' }
+];
+
+app.get('/comments', ensureLoggedIn, (req, res) => {
+  res.render('comments', { comments, title: 'Comments' });
+});
+
+app.post('/comments', ensureLoggedIn, (req, res) => {
+  const user = req.user.username || 'Anonymous';
+  const text = req.body.comment || '';
+  if (text.trim()) {
+    comments.push({ id: comments.length + 1, user, text });
+    req.flash('success', 'Comment added!');
+  } else {
+    req.flash('error', 'Comment cannot be empty.');
+  }
+  res.redirect('/comments');
+});
+
+// Show the SAML config editor page
+app.get('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
+  let configText = '';
+  let config = {};
+  try {
+    configText = fs.readFileSync(path.join(__dirname, 'admin', 'saml-config.json'), 'utf-8');
+    config = JSON.parse(configText);
+  } catch (err) {
+    // File might not exist or invalid JSON, that's fine
+    configText = '{}';
+    config = {};
+  }
+  res.render('admin-saml-config', { title: 'Edit SAML Config', configText, config });
+});
+
+
+const samlp = require('samlp');
+
+app.get('/saml/metadata', (req, res) => {
+  if (!samlConfig || !samlConfig.cert || !samlConfig.issuer || !samlConfig.callbackUrl) {
+    return res.status(500).send('SAML config incomplete');
+  }
+
+  samlp.metadata({
+    issuer: samlConfig.issuer,
+    cert: samlConfig.cert,
+    acsUrl: samlConfig.callbackUrl
+  })(req, res);
+});
+
+
+
+// Handle saving the SAML config changes
+app.post('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
+  const configText = req.body.configText || '{}';
+  try {
+    // Validate JSON
+    JSON.parse(configText);
+    // Save to file
+    fs.writeFileSync(path.join(__dirname, 'admin', 'saml-config.json'), configText, 'utf-8');
+    req.flash('success', 'SAML config saved successfully.');
+    // Reload the SAML config in memory
+    loadSamlConfig();
+  } catch (err) {
+    req.flash('error', 'Invalid JSON format: ' + err.message);
+  }
+  res.redirect('/admin/saml-config');
+});
+
+
+const forge = require('node-forge');
+
+const CONFIG_PATH = path.join(__dirname, 'admin', 'saml-config.json');
+const CERT_PATH = path.join(__dirname, 'admin', 'cert.pem');
+const KEY_PATH = path.join(__dirname, 'admin', 'key.pem');
+// Generates cert + key and updates the config
+app.post('/admin/saml-config/generate-cert', (req, res) => {
+  try {
+    const pki = forge.pki;
+    const keys = pki.rsa.generateKeyPair(2048);
+    const cert = pki.createCertificate();
+
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = '01';
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date();
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 2);
+
+    const attrs = [{ name: 'commonName', value: 'TestSAMLApp' }];
+    cert.setSubject(attrs);
+    cert.setIssuer(attrs);
+    cert.sign(keys.privateKey);
+
+    const certPem = pki.certificateToPem(cert);
+    const keyPem = pki.privateKeyToPem(keys.privateKey);
+
+    fs.writeFileSync(KEY_PATH, keyPem);
+    fs.writeFileSync(CERT_PATH, certPem);
+
+    // Load and update config
+    const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    config.cert = certPem;
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+
+    // ✅ Reload config and strategy in memory
+    loadSamlConfig();
+
+    req.flash('success', 'New certificate generated and config updated.');
+    res.redirect('/admin/saml-config');
+  } catch (err) {
+    console.error('Error generating cert:', err);
+    res.status(500).send('Failed to generate cert');
+  }
+});
+
+const xml2js = require('xml2js');
+
+app.post('/admin/saml-config/upload-metadata', ensureLoggedIn, ensureAdmin, upload.single('metadata'), (req, res) => {
+  if (!req.file) {
+    req.flash('error', 'No file uploaded');
+    return res.redirect('/admin/saml-config');
+  }
+
+  const xmlPath = req.file.path;
+  const xmlData = fs.readFileSync(xmlPath, 'utf-8');
+
+  xml2js.parseString(xmlData, (err, result) => {
+    if (err) {
+      req.flash('error', 'Invalid XML: ' + err.message);
+      fs.unlinkSync(xmlPath);
+      return res.redirect('/admin/saml-config');
+    }
+
+    try {
+      const entityDescriptor = result['EntityDescriptor'];
+      if (!entityDescriptor) throw new Error('Missing EntityDescriptor');
+
+      const idpSSODescriptor = entityDescriptor['IDPSSODescriptor']?.[0];
+      if (!idpSSODescriptor) throw new Error('Missing IDPSSODescriptor');
+
+      const singleSignOnService = idpSSODescriptor['SingleSignOnService']?.find(s => s.$.Binding.includes('HTTP-Redirect'));
+      if (!singleSignOnService) throw new Error('Missing SingleSignOnService');
+
+      const keyDescriptor = idpSSODescriptor['KeyDescriptor']?.find(k => k.$.use === 'signing');
+      if (!keyDescriptor) throw new Error('Missing signing KeyDescriptor');
+
+      const certData = keyDescriptor['KeyInfo'][0]['X509Data'][0]['X509Certificate'][0];
+
+      // Read current config or create new
+      let samlConfig = {};
+      try {
+        samlConfig = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+      } catch {
+        samlConfig = {};
+      }
+
+      samlConfig.entryPoint = singleSignOnService.$.Location;
+      samlConfig.issuer = entityDescriptor.$.entityID;
+      samlConfig.cert = formatCert(certData);
+
+      // Keep callbackUrl if set, else default
+      if (!samlConfig.callbackUrl) samlConfig.callbackUrl = 'http://localhost:3000/login/callback';
+
+      fs.writeFileSync(CONFIG_PATH, JSON.stringify(samlConfig, null, 2), 'utf-8');
+
+      loadSamlConfig();
+
+      req.flash('success', 'Azure AD metadata uploaded and SAML config updated.');
+    } catch (parseErr) {
+      req.flash('error', 'Failed to parse Azure metadata: ' + parseErr.message);
+    } finally {
+      fs.unlinkSync(xmlPath);
+      res.redirect('/admin/saml-config');
+    }
+  });
+});
+
+// Helper to add -----BEGIN CERTIFICATE----- wrappers and newlines if needed
+function formatCert(rawCert) {
+  let cert = rawCert.replace(/\r?\n|\r/g, '').match(/.{1,64}/g).join('\n');
+  return `-----BEGIN CERTIFICATE-----\n${cert}\n-----END CERTIFICATE-----\n`;
+}
+
+
+// Path to the log file
+const logFilePath = path.join(__dirname, '..', 'logs', 'app.log');
+
+const adminRoutes = require('./routes/admin');
+app.use('/admin', adminRoutes);
+
+
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`TestSAMLApp running on http://localhost:${PORT}`);
+});
+

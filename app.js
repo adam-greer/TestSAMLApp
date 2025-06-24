@@ -102,18 +102,20 @@ function loadSamlConfig() {
     const cfg = JSON.parse(raw);
 
     if (cfg.cert) {
-      // The cert is stored as base64 string without headers from the router
-      let rawCert = cfg.cert;
+      let rawCert = cfg.cert.replace(/\r?\n/g, '').trim(); // normalize & strip whitespace
 
-      // If the cert string does not already contain PEM headers, rebuild it
+      // Store the base64 version separately for XML metadata use
+      cfg.certRaw = rawCert;
+
+      // Convert to PEM format (with headers and line wrapping) for use by SAML strategy
       if (!rawCert.includes('-----BEGIN CERTIFICATE-----')) {
-        rawCert =
+        cfg.cert =
           '-----BEGIN CERTIFICATE-----\n' +
-          rawCert.match(/.{1,64}/g).join('\n') + // add newlines every 64 chars
+          rawCert.match(/.{1,64}/g).join('\n') +
           '\n-----END CERTIFICATE-----\n';
+      } else {
+        cfg.cert = rawCert;
       }
-
-      cfg.cert = rawCert; // overwrite with proper PEM for SAML strategy
     } else {
       console.warn('SAML config missing certificate');
     }
@@ -134,17 +136,6 @@ function loadSamlConfig() {
     console.warn('Failed to load SAML config:', err.message);
   }
 }
-
-// === REMOVE THIS ENTIRE SECTION - it conflicts with your router ===
-// DELETE FROM HERE:
-/*
-app.post('/admin/saml/generate-cert', ensureLoggedIn, ensureAdmin, (req, res) => {
-  // ... DELETE THIS ENTIRE ENDPOINT
-});
-*/
-// TO HERE (remove the entire endpoint)
-
-// === Keep the rest of your app.js as is ===
 
 
 // Initial load

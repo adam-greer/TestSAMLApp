@@ -101,9 +101,9 @@ function loadSamlConfig() {
     const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
     const cfg = JSON.parse(raw);
 
-    if (cfg.cert || cfg.certificate) {
-      // The cert may be stored as a continuous base64 string (no headers/newlines)
-      let rawCert = cfg.cert || cfg.certificate;
+    if (cfg.cert) {
+      // The cert is stored as base64 string without headers from the router
+      let rawCert = cfg.cert;
 
       // If the cert string does not already contain PEM headers, rebuild it
       if (!rawCert.includes('-----BEGIN CERTIFICATE-----')) {
@@ -113,7 +113,7 @@ function loadSamlConfig() {
           '\n-----END CERTIFICATE-----\n';
       }
 
-      cfg.cert = rawCert; // overwrite with proper PEM
+      cfg.cert = rawCert; // overwrite with proper PEM for SAML strategy
     } else {
       console.warn('SAML config missing certificate');
     }
@@ -135,75 +135,20 @@ function loadSamlConfig() {
   }
 }
 
+// === REMOVE THIS ENTIRE SECTION - it conflicts with your router ===
+// DELETE FROM HERE:
+/*
+app.post('/admin/saml/generate-cert', ensureLoggedIn, ensureAdmin, (req, res) => {
+  // ... DELETE THIS ENTIRE ENDPOINT
+});
+*/
+// TO HERE (remove the entire endpoint)
+
+// === Keep the rest of your app.js as is ===
+
+
 // Initial load
 loadSamlConfig();
-
-// === SAML Metadata Route ===
-app.get('/saml/metadata', (req, res) => {
-  if (!samlConfig || !samlConfig.cert || !samlStrategy) {
-    return res.status(500).send('SAML not configured');
-  }
-
-  try {
-    // Use the strategy's generateServiceProviderMetadata method
-    const metadata = samlStrategy.generateServiceProviderMetadata(
-      samlConfig.cert, // decryption cert
-      samlConfig.cert  // signing cert (can be the same)
-    );
-    res.type('application/xml').send(metadata);
-  } catch (err) {
-    console.error('Failed to generate SP metadata:', err);
-    res.status(500).send('Failed to generate SP metadata');
-  }
-});
-
-// === Admin: Generate Certificate and Key ===
-app.post('/admin/saml/generate-cert', ensureLoggedIn, ensureAdmin, (req, res) => {
-  try {
-    const pki = forge.pki;
-    const keys = pki.rsa.generateKeyPair(2048);
-    const cert = pki.createCertificate();
-
-    cert.publicKey = keys.publicKey;
-    cert.serialNumber = '01';
-    cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date();
-    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 2);
-
-    const attrs = [{ name: 'commonName', value: 'TestSAMLApp' }];
-    cert.setSubject(attrs);
-    cert.setIssuer(attrs);
-    cert.sign(keys.privateKey);
-
-    const certPem = pki.certificateToPem(cert);
-    const keyPem = pki.privateKeyToPem(keys.privateKey);
-
-    // Write cert and key files
-    fs.writeFileSync(CERT_PATH, certPem);
-    fs.writeFileSync(KEY_PATH, keyPem);
-
-    // Load config, update cert with full PEM (with headers)
-    let config = {};
-    try {
-      config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-    } catch {}
-
-    // Store full PEM cert string here (including headers)
-    config.cert = certPem;
-
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
-
-    // Reload SAML config and strategy after cert update
-    loadSamlConfig();
-
-    req.flash('success', 'Certificate generated and saved successfully.');
-    res.redirect('/admin/saml-config');
-  } catch (err) {
-    console.error('Error generating cert:', err);
-    req.flash('error', 'Failed to generate certificate: ' + err.message);
-    res.redirect('/admin/saml-config');
-  }
-});
 
 // === Passport Serialization ===
 passport.serializeUser((user, done) => {
@@ -231,51 +176,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// === Admin: SAML Config Editor ===
-app.get('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
-  let configText = '{}';
-  let configObj = {};
-  try {
-    configText = fs.readFileSync(CONFIG_PATH, 'utf-8');
-    configObj = JSON.parse(configText);
-  } catch {
-    configText = '{}';
-    configObj = {};
-  }
-  res.render('admin-saml-config', {
-    title: 'Edit SAML Config',
-    configText,
-    config: configObj,
-    messages: req.flash()
-  });
-});
-
-app.post('/admin/saml-config', ensureLoggedIn, ensureAdmin, (req, res) => {
-  const configPath = path.join(__dirname, 'admin', 'saml-config.json');
-
-  // Load current config or default empty
-  let config = {};
-  try {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch {}
-
-  // Update the attributes key from the form
-  if (req.body.attributes) {
-    config.attributes = req.body.attributes;
-  }
-
-  // Optionally update other config fields here as needed
-
-  // Write back the updated config
-  try {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
-    req.flash('success', 'SAML configuration updated successfully.');
-  } catch (err) {
-    req.flash('error', 'Failed to save config: ' + err.message);
-  }
-
-  res.redirect('/admin/saml-config');
-});
 
 console.log('=== DEBUGGING ROUTER IMPORTS ===');
 
@@ -337,8 +237,8 @@ app.use('/users', usersRouter);
 app.use('/upload', uploadRouter);
 app.use('/', commentsRouter);
 app.use('/logout', logoutRouter);
+app.use('/admin', samlConfigRouter);
 app.use('/admin/saml-config', samlConfigRouter);
-app.use('/', samlConfigRouter);
 app.use('/saml', samlRouter);
 
 // === Error Handling Middleware (Must be last) ===

@@ -22,12 +22,12 @@
 
 
 <hr>
-<form method="POST" action="/admin/saml-config/saml-generate-cert" onsubmit="return confirm('Generate a new x509 cert and update metadata?')">
+<form method="POST" action="/admin/saml-generate-cert" onsubmit="return confirm('Generate a new x509 cert and update metadata?')">
   <button type="submit" class="btn btn-warning mt-2">🔐 Generate New X.509 Certificate</button>
 </form>
 
 <h3>Upload Azure AD Metadata XML</h3>
-<form action="/admin/saml-config/upload-metadata" method="post" enctype="multipart/form-data" class="mb-4">
+<form action="/admin/saml/upload-metadata" method="post" enctype="multipart/form-data" class="mb-4">
   <div class="mb-3">
     <input type="file" name="metadata" id="metadata" accept=".xml" required class="form-control" />
   </div>
